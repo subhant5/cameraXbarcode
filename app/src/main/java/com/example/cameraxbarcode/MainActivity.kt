@@ -1,42 +1,39 @@
 package com.example.cameraxbarcode
 
 import android.Manifest
-import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
+import android.util.Log
+import android.util.Size
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.*
+import androidx.camera.core.ImageAnalysis.*
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import android.widget.Toast
-import androidx.camera.lifecycle.ProcessCameraProvider
-import android.util.Log
-import android.util.Size
-import androidx.camera.core.*
-import androidx.camera.core.ImageAnalysis.*
-import androidx.camera.video.FallbackStrategy
-import androidx.camera.video.MediaStoreOutputOptions
-import androidx.camera.video.Quality
-import androidx.camera.video.QualitySelector
-import androidx.camera.video.VideoRecordEvent
-import androidx.core.content.PermissionChecker
 import com.example.cameraxbarcode.databinding.ActivityMainBinding
-
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import org.tensorflow.lite.support.image.ImageProcessor
+import org.tensorflow.lite.support.image.TensorImage
+import org.tensorflow.lite.task.core.BaseOptions
+import org.tensorflow.lite.task.core.vision.ImageProcessingOptions
+import org.tensorflow.lite.task.vision.classifier.ImageClassifier
+import org.tensorflow.lite.task.vision.classifier.ImageClassifier.ImageClassifierOptions
+import java.io.File
 import java.nio.ByteBuffer
-import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+
 
 typealias LumaListener = (luma: Double) -> Unit
 
@@ -52,6 +49,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
 
     private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
+        private val imageClassifieropts =
+            ImageClassifierOptions.builder().setScoreThreshold(0.5f).setMaxResults(1)
+        private val baseOptionsBuilder = BaseOptions.builder().setNumThreads(1).useNnapi()
 
         private fun ByteBuffer.toByteArray(): ByteArray {
             rewind()    // Rewind the buffer to zero
@@ -59,6 +59,8 @@ class MainActivity : AppCompatActivity() {
             get(data)   // Copy the buffer into a byte array
             return data // Return the byte array
         }
+
+        // Initialization
 
         private val options =
             BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_PDF417).build()
@@ -71,13 +73,21 @@ class MainActivity : AppCompatActivity() {
                 )
             }
             bitmapBuffer.copyPixelsFromBuffer(image.planes[0].buffer)
-            val tensorimage = InputImage.fromBitmap(bitmapBuffer, 90)
-            scanner.process(tensorimage).addOnSuccessListener { barcodes ->
-                for (barcode in barcodes) {
-                    Log.d(TAG, "Barcode info: ${barcode.displayValue}")
-                }
-            }
+            imageClassifieropts.setBaseOptions(baseOptionsBuilder.build())
 
+            val imageClassifier = ImageClassifier.createFromFileAndOptions(
+                File("model.tflite"), imageClassifieropts.build()
+            )
+
+            val imageProcessor = ImageProcessor.Builder().build()
+
+            // Preprocess the image and convert it into a TensorImage for classification.
+            val tensorImage = imageProcessor.process(TensorImage.fromBitmap(bitmapBuffer))
+
+            val imageProcessingOptions = ImageProcessingOptions.builder()
+                .setOrientation(ImageProcessingOptions.Orientation.BOTTOM_LEFT).build()
+            val results = imageClassifier.classify(tensorImage, imageProcessingOptions)
+            Log.d(TAG, "Model results: $results")
 
             val buffer = image.planes[0].buffer
             val data = buffer.toByteArray()
@@ -144,8 +154,8 @@ class MainActivity : AppCompatActivity() {
 
             // Preview
             val preview = Preview.Builder().setTargetResolution(Size(w, h)).build().also {
-                    it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
-                }
+                it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
+            }
 
             imageCapture = ImageCapture.Builder().build()
 
