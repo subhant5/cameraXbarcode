@@ -59,9 +59,9 @@ class MainActivity : AppCompatActivity() {
             get(data)   // Copy the buffer into a byte array
             return data // Return the byte array
         }
-        private val options = BarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_PDF417)
-            .build()
+
+        private val options =
+            BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_PDF417).build()
         private val scanner = BarcodeScanning.getClient(options)
         private lateinit var bitmapBuffer: Bitmap
         override fun analyze(image: ImageProxy) {
@@ -91,8 +91,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<String>, grantResults:
-        IntArray
+        requestCode: Int, permissions: Array<String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
@@ -100,9 +99,7 @@ class MainActivity : AppCompatActivity() {
                 startCamera()
             } else {
                 Toast.makeText(
-                    this,
-                    "Permissions not granted by the user.",
-                    Toast.LENGTH_SHORT
+                    this, "Permissions not granted by the user.", Toast.LENGTH_SHORT
                 ).show()
                 finish()
             }
@@ -146,22 +143,16 @@ class MainActivity : AppCompatActivity() {
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
             // Preview
-            val preview = Preview.Builder()
-                .setTargetResolution(Size(w, h))
-                .build()
-                .also {
+            val preview = Preview.Builder().setTargetResolution(Size(w, h)).build().also {
                     it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
                 }
 
-            imageCapture = ImageCapture.Builder()
-                .build()
+            imageCapture = ImageCapture.Builder().build()
 
             val imageAnalyzer =
                 ImageAnalysis.Builder().setOutputImageFormat(OUTPUT_IMAGE_FORMAT_RGBA_8888)
                     .setTargetResolution(Size(w, h))
-                    .setBackpressureStrategy(STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                    .also {
+                    .setBackpressureStrategy(STRATEGY_KEEP_ONLY_LATEST).build().also {
                         it.setAnalyzer(Executors.newFixedThreadPool(1), LuminosityAnalyzer { luma ->
                             Log.d(TAG, "Average luminosity: $luma")
                         })
@@ -185,11 +176,10 @@ class MainActivity : AppCompatActivity() {
                 val centerWidth = w / 2
                 val centerHeight = h / 2
 
-                val autoFocusPoint = factory.createPoint(centerWidth.toFloat(), centerHeight.toFloat());
+                val autoFocusPoint =
+                    factory.createPoint(centerWidth.toFloat(), centerHeight.toFloat());
                 val builder = FocusMeteringAction.Builder(
-                    autoFocusPoint,
-                    FocusMeteringAction.FLAG_AF or
-                            FocusMeteringAction.FLAG_AE
+                    autoFocusPoint, FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE
                 )
 
                 builder.setAutoCancelDuration(1, TimeUnit.SECONDS)
@@ -217,14 +207,12 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "CameraXApp"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS =
-            mutableListOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.RECORD_AUDIO
-            ).apply {
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-                    add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                }
-            }.toTypedArray()
+        private val REQUIRED_PERMISSIONS = mutableListOf(
+            Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO
+        ).apply {
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+        }.toTypedArray()
     }
 }
