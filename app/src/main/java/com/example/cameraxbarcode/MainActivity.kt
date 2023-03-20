@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity(), Analyzer {
                     }
 
             // Select back camera as a default
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
 
             try {
                 // Unbind use cases before rebinding
@@ -145,7 +145,7 @@ class MainActivity : AppCompatActivity(), Analyzer {
     }
 
     companion object {
-        private const val TAG = "CameraXApp"
+        private const val TAG = "cameraxbarcode"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS =
