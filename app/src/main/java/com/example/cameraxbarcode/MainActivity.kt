@@ -1,13 +1,13 @@
 package com.example.cameraxbarcode
 
 
-
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.Surface
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
@@ -23,11 +23,14 @@ import com.example.cameraxbarcode.databinding.ActivityMainBinding
 import com.example.cameraxbarcode.ml.Model
 
 import org.tensorflow.lite.DataType
+import org.tensorflow.lite.support.common.ops.NormalizeOp
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
+import java.lang.Math.exp
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.exp
 
 
 class MainActivity : AppCompatActivity(), Analyzer {
@@ -109,6 +112,7 @@ class MainActivity : AppCompatActivity(), Analyzer {
                 ImageAnalysis.Builder().setOutputImageFormat(OUTPUT_IMAGE_FORMAT_RGBA_8888)
                     .build()
                     .also {
+                        it.targetRotation = Surface.ROTATION_270
                         it.setAnalyzer(cameraExecutor) { imageProxy ->
                             analyze(imageProxy)
                         }
@@ -178,15 +182,22 @@ class MainActivity : AppCompatActivity(), Analyzer {
         val inputFeature0 =
             TensorBuffer.createFixedSize(intArrayOf(1, 3, 640, 480), DataType.FLOAT32)
         inputFeature0.loadBuffer(byteBuffer)
-
+        inputFeature0.apply {
+            NormalizeOp(
+                floatArrayOf(0.485f, 0.456f, 0.406f),
+                floatArrayOf(0.229f, 0.224f, 0.225f)
+            )
+        }
         // Runs model inference and gets result.
         val outputs = model.process(inputFeature0)
         val outputFeature0 = outputs.outputFeature0AsTensorBuffer
 
         for (i in 0 until outputFeature0.floatArray.size) {
-            Log.d(TAG, "Model Output ${outputFeature0.floatArray[i]}")
+            var output = 1 / (1 + exp(-outputFeature0.floatArray[i]))
+            Log.d(TAG, "Model Output $output")
 
         }
+
         // Releases model resources if no longer used.
         model.close()
 
