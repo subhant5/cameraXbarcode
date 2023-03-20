@@ -42,48 +42,6 @@ class MainActivity : AppCompatActivity(), Analyzer {
     private lateinit var bitmapBuffer: Bitmap
     private lateinit var cameraExecutor: ExecutorService
 
-//    private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
-//
-//        private fun ByteBuffer.toByteArray(): ByteArray {
-//            rewind()    // Rewind the buffer to zero
-//            val data = ByteArray(remaining())
-//            get(data)   // Copy the buffer into a byte array
-//            return data // Return the byte array
-//        }
-//        private lateinit var bitmapBuffer: Bitmap
-//        override fun analyze(image: ImageProxy) {
-//            if (!::bitmapBuffer.isInitialized) {
-//                bitmapBuffer = Bitmap.createBitmap(
-//                    image.width, image.height, Bitmap.Config.ARGB_8888
-//                )
-//            }
-//            bitmapBuffer.copyPixelsFromBuffer(image.planes[0].buffer)
-//            val options = BarcodeScannerOptions.Builder()
-//                .setBarcodeFormats(
-//                    Barcode.FORMAT_QR_CODE,
-//                    Barcode.FORMAT_AZTEC)
-//                .build()
-//
-//            val tensorimage = InputImage.fromBitmap(bitmapBuffer, 0)
-//            val scanner = BarcodeScanning.getClient(options)
-//            scanner.process(tensorimage).addOnSuccessListener { barcodes->
-//                for(barcode in barcodes)
-//                {
-//                    Log.d(TAG, "Barcode info: ${barcode.displayValue}")
-//                }
-//            }
-//
-//
-//            val buffer = image.planes[0].buffer
-//            val data = buffer.toByteArray()
-//            val pixels = data.map { it.toInt() and 0xFF }
-//            val luma = pixels.average()
-//
-//            listener(luma)
-//
-//            image.close()
-//        }
-//    }
 
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<String>, grantResults:
